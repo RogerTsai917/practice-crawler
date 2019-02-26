@@ -67,7 +67,8 @@ def getDetailArticlesList(indexUrl, briefArticlesList):
 def getDetailArticle(indexUrl, briefArticle):
     html = getHTML(indexUrl + briefArticle["href"])
     article = getArticleInfo(html)
-    replies = getArticleReplies(html)
+    replies = getArticleReplies(html, indexUrl + briefArticle["href"])
+    print(replies)
     #article["replies": replies]
     return ""
 
@@ -84,14 +85,31 @@ def getArticleInfo(html):
     return {"authorid": authorId, "title": Title, "popularity": popularity, "posttime": postTime, "content": content}
 
 
-def getArticleReplies(indexHTML):
+def getArticleReplies(indexHTML, indexUrl):
     root = bs4.BeautifulSoup(indexHTML, "html.parser")
-    scripts = root.find_all("script", type="text/javascript")
-    for script in scripts:
-        if " maxpage" in script.text:
-            print(script)
+    maxPage = getMaxPage(root)
+    ArticleReplies = []
+    for page in range(1, 2):
+        html = getHTML(indexUrl + "&p=" + str(page))
+        root = bs4.BeautifulSoup(html, "html.parser")
+        replies = root.find_all("div", class_="single-post")
+        for replie in replies:
+            if replie.find("div", class_="info").text == " ":
+                authorId = replie.find("div", class_="fn").a.string
+                postTime = replie.find("div", class_="date").text.split("#")[0].replace(u'\xa0', u'')
+                content = replie.find("div", class_="single-post-content").text
+                ArticleReplies.append({"authorid": authorId, "posttime": postTime, "content": content})
 
-    return ""
+    return ArticleReplies
+
+def getMaxPage(root):
+    pattern = re.compile(r'maxpage = (\d+)')
+    scripts = root.find_all("script", text=pattern)
+    maxpage = 1
+    for script in scripts:
+        maxpage = int(pattern.search(script.text).group(1))
+    return maxpage
+
 
 def JsonWiter(message):
     print(json.dumps({"articles": message}, sort_keys=False, indent=4, ensure_ascii=False)) 
