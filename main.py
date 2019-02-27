@@ -10,3 +10,5 @@ briefArticlesList = crawler.getBriefArticlesList(url, articlesNumber)
 briefArticlesList = crawler.sortArticlesByReplies(briefArticlesList)
 
 articlesList = crawler.getDetailArticlesList(indexUrl, briefArticlesList)
+
+crawler.JsonWiter({"articles": articlesList})
